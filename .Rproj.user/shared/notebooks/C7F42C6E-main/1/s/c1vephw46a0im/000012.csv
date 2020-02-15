@@ -1,0 +1,6 @@
+"0","set.seed(1)"
+"0","sampleSize <- round(nrow(redDF)*0.8)"
+"0","idx <- sample(seq_len(sampleSize), size = sampleSize)"
+"0",""
+"0","X.train_red <- redDF[idx,]"
+"0","X.test_red <- redDF[-idx,]"

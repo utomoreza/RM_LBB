@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1581758252338.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "C4DFCD3A",
+    "lastKnownWriteTime" : 1579850061,
+    "last_content_update" : 1579850061,
+    "path" : "~/Projects/3. DV/4th Day/inclass_dv_day4.Rmd",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "1022,42",
+        "scrollLine" : "1008"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

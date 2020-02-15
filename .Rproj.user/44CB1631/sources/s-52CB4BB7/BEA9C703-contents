@@ -1,0 +1,834 @@
+---
+title: 'RM : In-class materials'
+author: "Ajeng Prastiwi"
+date: "`r format(Sys.Date(), '%B %e, %Y')`"
+output:
+  html_document:
+    df_print: paged
+    highlight: tango
+    theme: cosmo
+    toc: yes
+    toc_float:
+      collapsed: no
+  word_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen = 99)
+```
+
+# Day 1
+
+**Business Problem**
+
+Pemilihan variabel target biasanya dikaitkan dengan masalah bisnis yang ingin diselesaikan:
+
+1. Sebuah agen properti berusaha membangun sebuah model untuk menebak harga sebuah properti untuk digunakan sebagai acuan kontrol untuk menjaga harga pasar. Untuk itu mereka mengembangkan sebuah model dengan:
+
+- Variabel target: harga rumah
+
+- Variabel prediktor: luas tanah, umur bangunan, jarak ke public transportation, kota, jumlah kamar
+
+2. Seorang pemilik restoran ingin menebak ingin menebak berapa banyak penjualan yang akan dihasilkan di bulan depan oleh restorannya.  Untuk itu mereka mengembangkan sebuah model dengan:
+
+- Variabel target: total penjualan
+
+- Variabel prediktor: harga jual, promosi/diskon, stock makanan, harga beli
+
+## Supervised dan Unsupervised Learning
+
+1. Supervised Learning: memiliki target variabel
+
+   * Regression: target variabel nya numerik
+
+   * Classification: target variabel nya kategorik
+
+2. Unsupervised Learning: tidak memiliki target 
+variabel
+
+   * Clustering
+
+   * Dimensionality Reduction
+
+## Linear Regression
+Import data copiers
+```{r}
+copiers <- read.csv("data_input/copiers.csv")
+```
+
+inspect data
+```{r}
+head(copiers)
+```
+
+**Business Problem**
+
+Ingin memprediksi profit berdasarkan nilai sales. Tentukan:
+
+- Variabel target: Profit
+
+- Variabel prediktor: Sales
+
+
+Eksplorasi data:
+
+**Cek persebaran data**
+
+Cek persebaran variabel Profit:
+-histogram atau boxplot
+```{r}
+boxplot(copiers$Profit)
+```
+
+Cek persebaran variabel Sales
+```{r}
+boxplot(copiers$Sales)
+```
+
+
+**Cek korelasi antar variabel target dan prediktor**
+
+```{r}
+plot(copiers$Sales, copiers$Profit)
+```
+
+Kesimpulan dari plot:
+
+Ketika kita mendapatkan ada dua variabel yang saling berhubungan erat. Maka dapat dikatakan kedua variabel tersebut memiliki indikasi pasangan prediktor - target yang baik. 
+
+*Nilai korelasi yang besar adalah indikasi yang baik untuk hubungan prediktor dan target.*
+
+
+Formula model regresi:
+
+ $\hat{y}=\beta_0+\beta_1.x_1+...+\beta_n.x_n$. 
+ 
+dimana, $x_1,...,x_n$ merupakan variabel prediktor yang digunakan
+
+
+## Simple Linear Regression
+
+**Membuat Model**
+
+Mencoba membuat model tanpa variabel prediktor
+format dari formula: y~x
+```{r}
+lm(formula = Profit ~ 1,data = copiers)
+```
+
+inspect rata-rata dari target variabel:
+```{r}
+mean(copiers$Profit)
+```
+
+*Kesimpulan:*
+
+Ketika membuat model regresi tanpa variabel prediktor, akan menghasilkan nilai rata-rata dari variabel target.
+
+
+Membuat model dengan variabel prediktor
+
+```{r}
+model_ols <- lm(formula = Profit ~ Sales,data = copiers)
+model_ols
+```
+
+Ketika kita memiliki Sales bernilai 1000, berapa jumlah Profit yang didapatkan?
+
+```{r}
+model_ols$coefficients[1] + (model_ols$coefficients[2]*1000) # cara 1
+
+-114.0625 + (0.4229*1000) # cara 2
+```
+
+
+Model yang diperoleh:
+
+Profit = -114.0625 + 0.4229 Sales
+
+
+
+## Interpretasi Model
+
+**Interpretasi model regresi**
+
+- Intercept: Titik awal garis regresi terbentuk, menunjukkan besar profit ketika nilai Sales = 0
+
+- Slope: kenaikan setiap 1 satuan, kenaikan 1 Sales meningkatkan profit sebesar 0.4229
+
+- Koefisien bernilai positif = korelasi positif
+
+Tampilkan sebaran data dan model yang dihasilkan
+```{r}
+plot(copiers$Sales, copiers$Profit)
+abline(model_ols, col = "red")
+```
+
+Prediksi nilai profit, apabila kita memiliki nilai Sales sebagai berikut:
+
+```{r}
+Sales <- c(300, 2900, 357, 502)
+```
+Gunakan function `predict()` untuk melakukan prediksi
+```{r}
+predict(object = model_ols,newdata = data.frame(Sales))
+```
+
+
+## Ordinary Least Square
+
+Objective: Berusaha mencari nilai parameter untuk mendapatkan error terkecil dengan menggunakan nilai rata-rata.
+
+**Residual**
+
+Residual atau error merupakan selisih dari nilai prediksi dengan nilai actual.
+
+```{r eval=F}
+library(manipulate)
+expr1 <- function(mn){
+  mse <- mean((copiers$Sales - mn)^2)
+  hist(copiers$Sales, breaks=20, main=paste("Center = ", mn, "MSE=", round(mse, 2), sep=""))
+  abline(v=mn, lwd=2, col="darkred")
+}
+manipulate(expr1(mn), mn=slider(1260, 1360, step=10))
+```
+
+**Interpretasi `summary()` model**
+
+```{r}
+summary(model_ols)
+```
+
+- Nilai p-value sebagai tolak ukur apakah variabel prediktor berpengaruh signifikan terhadap variabel target. Dikatakan signifikan ketika nilai p-value < 0.05. 
+
+Kesimpulan: Variabel Sales berpengaruh secara signifikan terhadap variabel Profit
+
+- R-squared: seberapa baik predictor dapat menjelaskan keberagaman kelas target. Ukuran yang bisa kita gunakan untuk mengukur `kebaikan model`.
+
+Kesimpulan:  Kemampuan model dapat menjelaskan target variabel sebesar 88%, sedangkan sisanya sebesar 12% dipengaruhi oleh variabel diluar model.
+
+# Day 2
+
+## Leverage vs Influence
+
+Levarage adalah outlier. Sedangkan influence merupakan tolak ukur seberapa berpengaruh (merusak model) si outlier tersebut. Jadi data outlier ada beberapa kemungkinan:
+
+* high leverage low influence
+* high leverage high influence
+
+Sejauh ini, kita sudah membuat satu model yaitu `model_ols` yang menggunakan semua observasi. Lakukan exploratory data dengan mengecek apakah terdapat outlier pada variable `sales`.
+
+```{r}
+boxplot(copiers$Sales)
+```
+Inspect data outlier
+```{r}
+copiers2 <- copiers[copiers$Sales < 4000,]
+```
+Buatlah model linear regression tanpa data outlier
+```{r}
+model_no <- lm(formula = Profit ~ Sales, data = copiers2)
+```
+
+Bandingkan garis regresi yang dibentuk dari model_ols dan model_no, apakah data outlier tersebut akan menghasilkan output yang jauh berbeda?
+
+```{r}
+plot(copiers2$Sales,copiers2$Profit)
+abline(model_ols, col = "blue")
+abline(model_no, col = "green")
+```
+
+Kesimpulan:
+Outlier yang terdapat pada variable sales, tidak terlalu mempengaruhi model yang terbentuk, tipe outlier ini adalah high leverage dan low influence.
+
+
+Buatlah model dengan nilai outlier yang lebih ekstrem yaitu dengan menambahkan observasi Sales pada data outlier dengan `5000`. Kemudian bandingkan secara visual dengan model sebelumnya
+
+```{r}
+copiers[copiers$Sales > 4000,]
+#menambahkan nilai Sales pada observasi ke 59
+copiers[59,"Sales"] <- copiers[59,"Sales"] + 5000
+copiers[copiers$Sales > 4000,]
+```
+
+```{r}
+model_outlier <- lm(formula = Profit ~ Sales,data = copiers)
+plot(copiers2$Sales,copiers2$Profit)
+abline(model_ols, col = "blue")
+abline(model_no, col = "green")
+abline(model_outlier, col = "red")
+```
+
+
+Kesimpulan:
+
+Ketika kita menggunakan outlier yang sedikit lebih ekstrem, akan mempengaruhi garis regresi yang terbentuk.
+
+cek ketiga R-square dari model yang dibentuk
+
+```{r}
+summary(model_ols)$r.squared
+summary(model_no)$r.squared
+summary(model_outlier)$r.squared
+```
+
+
+## Multiple Regression
+
+### Studi kasus 1
+
+import data house.csv
+```{r}
+house <- read.csv("data_input/house_data.csv")
+head(house)
+
+```
+
+Tentukan business problem:
+1. Memprediksi harga rumah
+
+Tentukan variabel:
+1. Target: price
+2. Prediktor: 
+
+Eksplorasi data
+```{r}
+library(GGally)
+ggcorr(house,label = T)
+```
+cek scatterplot antara price dan sqft living
+```{r}
+plot(house$sqft_living, house$price)
+boxplot(house$sqft_living)
+```
+
+
+Bentuk model menggunakan 1 variabel prediktor
+```{r}
+model1_house <- lm(formula = price ~ sqft_living,data = house)
+summary(model1_house)
+```
+kesimpulan:
+
+Ketika variabel prediktor yang kita gunakan sudah berpengaruh terhadap variabel target,bukan berarti dia akan selalu mendapatkan nilai r squared yg besar.
+
+Bentuk model dengan keseluruhan variabel
+```{r}
+#model_all <- lm(formula = price ~ sqft_living + grade,data = house)
+model_all <- lm(formula = price ~ .,data = house)
+summary(model_all)
+```
+Interpretasi Model:
+
+1. Dengan menggunakan semua variabel meningkatkan nilai R squared
+
+2. Semua variabel prediktor berpengaruh terhadap variabel target
+
+
+Mencari nilai MSE
+```{r}
+library(MLmetrics)
+MSE(y_pred = model_all$fitted.values,y_true = house$price)
+RMSE(y_pred = model_all$fitted.values,y_true = house$price)
+```
+
+range variabel target
+```{r}
+summary(house$price)
+```
+
+
+### Studi kasus 2
+
+import data `crime`
+
+```{r}
+library(dplyr)
+crime <- read.csv("data_input/crime.csv") %>% 
+dplyr::select(-X)
+names(crime) <- c("percent_m", "is_south", "mean_education", "police_exp60", "police_exp59", "labour_participation", "m_per1000f", "state_pop", "nonwhites_per1000", "unemploy_m24", "unemploy_m39", "gdp", "inequality", "prob_prison", "time_prison", "crime_rate")
+head(crime)
+```
+
+Tentukan variabel:
+1. Target: inequality
+2. Prediktor:
+
+Cek korelasi setiap variabel:
+```{r}
+library(GGally)
+ggcorr(crime, label = T, hjust = 0.9,  label_size = 3, layout.exp = 3)
+```
+
+1. Buatlah model linear untuk memprediksi inequality berdasarkan GDP
+
+```{r}
+model_crime1 <- lm(formula = inequality ~ gdp,data = crime)
+```
+
+Interpretasi model
+```{r}
+summary(model_crime1)
+```
+
+2. Buatlah model linear untuk keseluruhan variabel
+
+```{r}
+model_allcrime <- lm(formula = inequality~.,data = crime)
+summary(model_allcrime)
+```
+
+rsquared digunakan untu simple linear regression, sedangkan adjusted r squared digunakan untuk multiple regression. Karena adjusted r squared memperhitungkan banyak observasi dan variabel prediktor yang digunakan.
+
+3. Dari output yang didapatkan terdapat variabel yang sangat tidak signifikan yaitu variabel `police_exp59`. Hilangkan variabel tersebut dari model:
+```{r}
+crime2 <- crime %>% 
+          select(-police_exp59)
+model_crime2 <- lm(formula = inequality ~.,data = crime2)
+summary(model_crime2)
+```
+
+Bandingkan adj.r.squared model_allcrime dan model_crime2
+```{r}
+summary(model_allcrime)$adj.r.squared
+summary(model_crime2)$adj.r.squared
+```
+
+Kesimpulan:
+
+
+## Feature Selection
+
+Feature selection merupakan tahapan dalam memilih variabel yang akan digunakan
+
+### Step-wise Regression
+
+Mengevaluasi model stepwise menggunakan nilai AIC (Akaike Information Criterion/ Information Loss). AIC menunjukkan banyak informasi yang hilang pada model.
+
+* backward elimination: Dari keseluruhan predictor yang digunakan, kemudian dievaluasi model dengan cara mengurangi variabel prediktor sehingga diperoleh model AIC terkecil.
+* forward selection: Dari model tanpa predictor, kemudian dievaluasi model dengan cara menambahkan variabel prediktor sehingga diperoleh model dengan AIC (Akaike Information Criterion) terkecil.
+* both
+
+```{r}
+# model tanpa prediktor
+model.none <- lm(formula = inequality ~ 1,data = crime)
+# model dengan semua prediktor
+model.all <- lm(formula = inequality ~. ,data = crime)
+```
+
+#### Backward
+
+Dari keseluruhan predictor yang digunakan, kemudian dievaluasi model dengan cara mengurangi variabel prediktor sehingga diperoleh model AIC terkecil.
+
+1. Menggunakan seluruh variabel
+
+2. Memilih variabel yang ketika dihilangkan, menghasilkan AIC terbaik
+
+3. Menghilangkan variabel yang dipilih dari tahap kedua
+
+4. Mengulangi step 2 dan step 3 hingga nilai AIC terbaik dihasilkan ketika tidak menghilangkan variabel apapun.
+
+```{r}
+step(object = model.all,direction = "backward", trace = 0)
+```
+
+Bentuk model
+```{r}
+model_back <- lm(formula = inequality ~ percent_m + is_south + mean_education + 
+    police_exp60 + labour_participation + state_pop + gdp + crime_rate, 
+    data = crime)
+summary(model_back)
+```
+
+#### Forward
+
+Dari model tanpa predictor, kemudian dievaluasi model dengan cara menambahkan variabel prediktor sehingga diperoleh model dengan AIC terkecil.
+
+1. Tidak menggunakan variabel apapun
+
+2. Memilih variabel yang ketika ditambahkan menghasilkan AIC terbaik
+
+3. Menambahkan variabel yang dipilih dari tahap kedua
+
+4. Mengulangi step 2 dan 3 hingga nilai AIC terbaol dihasilkan ketika tidak menambahkan variabel
+
+```{r}
+step(object = model.none,scope = list(lower = model.none, upper =model.all),direction = "forward", trace = 0)
+```
+
+Bentuk model
+```{r}
+model_forward <- lm(formula = inequality ~ gdp + crime_rate + mean_education + 
+    police_exp59 + is_south + labour_participation + state_pop + 
+    percent_m, data = crime)
+summary(model_forward)
+```
+
+- Both 
+
+Gabungan backward dan forward
+
+1. Menggunakan model tanpa prediktor/model dengan keseluruhan prediktor.
+
+2. Memilih penambahan variabel atau pengurangan variabel yang menghasilkan AIC terbaik.
+
+3. Menambahkan atau mengurangi variabel yang dipilih dari tahap kedua
+
+4. Meneruskan step 2 dan 3 hingga nilai AIC terbaik dihasilkan ketika tidak menambahkan variabel apa-apa.
+
+```{r}
+step(object = model.all,scope = list(lower = model.none, upper =model.all),direction = "both",trace = 0)
+```
+Bentuk model
+```{r}
+model_both <- lm(formula = inequality ~ gdp + crime_rate + mean_education + 
+    police_exp59 + is_south + labour_participation + state_pop + 
+    percent_m, data = crime)
+```
+
+Perbandingan nilai adjusted r-dquared pada ketiga model yang sudah dibuat
+```{r}
+summary(model_back)$adj.r.squared
+summary(model_forward)$adj.r.squared
+summary(model_both)$adj.r.squared
+```
+
+# Day 3
+
+## Confidence Interval
+
+Mencari hasil prediksi dengan confidence interval 95%
+```{r}
+predict(object = model_back,newdata = crime[1:3,], interval = "confidence", level = 0.95)
+```
+
+* Interpretasi: Apabila kita ingin memprediksi inequality, dengan keyakinan 95% saya bisa duga inequality yang kita peroleh sekitar 240 sampai dengan 255 untuk observasi yang pertama.
+
+*Visualisasi confidence interval untuk data copiers*
+```{r}
+library(ggplot2)
+ggplot(copiers,mapping = aes(x = Sales,y = Profit)) +
+  geom_point()+
+  geom_smooth(method = "lm", level = 0.89)
+```
+
+
+## Asumsi linear regression
+
+### Linearity
+
+**Dilakukan sebelum membuat model**. Untuk menguji apakah variabel target dan prediktor memiliki hubungan linear. Dapat dilihat dengan nilai korelasi menggunakan function `ggcorr()` atau dapat menggunakan uji statistik `cor.test()`. (ingin mendapatkan pvaue < alpha)
+```{r}
+cor.test(crime$inequality, crime$gdp)
+```
+
+Linearity hypothesis test: 
+
+H0: korelasi tidak signifikan
+
+H1: korelasi signifikan
+
+### Normality
+
+Harapannya ketika membuat model linear regression, error yang dihasilkan berdistribusi normal. Artinya error banyak berkumpul disekitar angka 0. Untuk menguji asumsi ini dapat dilakukan:
+
+1. Visualisasi histogram residual, dengan menggunakan fungsi `hist()`.
+```{r}
+hist(model_back$residuals)
+```
+2. uji statistik menggunakan `shapiro.test()`. (harapannya pvalue > alpha )
+
+```{r}
+shapiro.test(x = model_back$residuals)
+```
+Shapiro-Wilk hypothesis test:
+
+H0: error/residual berdistribusi normal
+
+H1: error/residual tidak berdistribusi normal
+
+*Kesimpulan: *
+
+### Homoscedasticity
+
+Harapannya dari model yang terbentuk memperoleh error/residual yang variansinya tidak membentuk sebuah pola (harus menyebar random). Untuk menguji asumsi ini dapat dilakukan:
+
+1. Visualisasi dengan scatterplot antara nilai prediksi(fitted values) dengan nilai error
+
+```{r}
+plot(model_back$fitted.values, model_back$residuals)
+abline(h = 0, col = "red")
+```
+2. uji statistika dengan Breusch-Pagan dari package `lmtest`
+
+Breusch-Pagan hypothesis test: (harapannya pvalue > alpha)
+
+H0: Variansi error menyebar konstan (Homoscedasticity)
+
+H1: Variansi error menyebar tidak konstan/membentuk pola (Heteroscedasticity)
+
+```{r}
+library(lmtest)
+bptest(model_back)
+```
+
+*Kesimpulan*
+
+
+### Multicolinearity
+
+Harapannya pada model linear regression, tidak terjadi multikolinearitas. Multikolinearitas terjadi ketika antar variabel prediktor yang digunakan pada model memiliki hubungan yang kuat. Ada atau tidak multikolinearitas dapat dilihat dari nilai VIF(Variance Inflation Factor):
+
+Ketika nilai VIF lebih dari 10 artinya terjadi multikolinearitas. harapannya mendapatkan VIF < 10
+```{r}
+library(car)
+vif(model_back)
+```
+
+
+
+## Studi kasus 3
+
+import data insurance
+```{r}
+insurance <- read.csv("data_input/insurance.csv")
+head(insurance)
+```
+
+Data insurance merupakan data `Medical Cost Personal Datasets` yang diunduh dari [Kaggle](https://www.kaggle.com/mirichoi0218/insurance). Berikut merupakan deskripsi dari variabel data insurance:
+
+- age: umur
+
+- sex: jenis kelamin
+
+- bmi: body mass index (ideal di angka 18.5-24.9)
+
+- children: jumlah anak
+
+- smoker: merokok atau tidak
+
+- region: wilayah
+
+- charges: premi yang harus dibayarkan nasabah
+
+Buatlah model regresi untuk data insurance:
+
+1. lakukan step by step dalam membuat model machine learning
+
+2. pilih model terbaik menurut bapak/ibu
+
+3. lakukan interpretasi dari model yang diperoleh
+
+4. Setelah mendapatkan model, lakukan prediksi pada data insurance_test, dan hitung nilai MSE dari hasil prediksi tersebut!
+
+
+1. Business problem
+
+Ingin memprediksi variabel `charges`
+target: `charges`
+
+2. Eksplor data
+
+```{r}
+ggcorr(insurance, label = T)
+```
+
+
+3. Membuat model dengan keseluruhan prediktor, analisa output dari function summary
+
+```{r}
+model_insurance <- lm(formula = charges ~ .,data = insurance)
+summary(model_insurance)
+```
+
+Model: 
+
+y = -11798.44 + 262.69 * age - 117.16 sexmale + 329.54 bmi + 454.48 children - 
+461.84* regionnorthwest - 1009.78* regionsouthwest - 1052.35 regionsouthwest
+
+
+```{r}
+set.seed(100)
+sample(1:5,1)
+```
+
+```{r}
+step(object = model_insurance,trace = 0, direction = "backward")
+```
+```{r}
+model2 <- lm(formula = charges ~ age + bmi + children + smoker, data = insurance)
+```
+
+```{r}
+MSE(y_pred = model2$fitted.values,y_true = insurance$charges)
+```
+
+```{r}
+insurance_test <- read.csv("data_input/insurance_test.csv")
+```
+
+```{r}
+pred_test <- predict(object = model2,newdata = insurance_test)
+MSE(y_pred = pred_test,y_true = insurance_test$charges)
+```
+
+Day 4
+
+# Regsubset
+
+```{r}
+library(leaps)
+reg <- regsubsets(charges ~ age + bmi + children + smoker + region, data = insurance, nbest = 2)
+plot(reg, scale="adjr", main="All possible regression: ranked by Adjusted R-squared")
+```
+
+# Exercise
+
+Data car merupakan data mengenai mobil bekas yang diunduh dari [Kaggle](https://www.kaggle.com/nehalbirla/vehicle-dataset-from-cardekho). Berikut merupakan deskripsi dari variabel data insurance:
+
+- Car_Name: This column should be filled with the name of the car.
+
+- YearThis: column should be filled with the year in which the car was bought.
+
+- Selling_Price: This column should be filled with the price the owner wants to sell the car at.
+
+- Present_PriceThis is the current ex-showroom price of the car.
+
+- Kms_DrivenThis is the distance completed by the car in km.
+
+- Fuel_TypeFuel type of the car.
+
+- Seller_TypeDefines whether the seller is a dealer or an individual.
+
+- TransmissionDefines whether the car is manual or automatic.
+
+- OwnerDefines the number of owners the car has previously had.
+
+
+Solutions:
+
+- Tentukan business problem
+
+- Tentukan target variable
+
+- Explore data: cek linearity. ggcor. cor.test, distribusi
+
+- Membuat model
+
+- Feature selection (berdasarkan bisnis dan hasil statistik)
+
+- Cek asumsi: normality, No heteroscedasticity,  no multiplecolinearity, 
+
+- Prediksi dengan data tes
+
+- Mencari nilai MSE/MAE/RMSE dari data train dan tes
+
+1. Business problem
+
+```{r}
+car <- read.csv("data_input/car.csv")
+car
+```
+
+Menentukan Selling_Price
+
+2. Target variable
+
+`Selling_Price`
+
+3. Explore data
+
+```{r}
+ggcorr(car, label = T)
+```
+
+
+
+```{r}
+boxplot(car)
+```
+
+```{r}
+cor.test(x = car$Selling_Price, y = car$Kms_Driven)
+hist(car$Kms_Driven)
+```
+
+```{r}
+model_carAll <- lm(formula = Selling_Price ~ ., data = car)
+summary(model_carAll)
+```
+
+```{r}
+car1 <- car %>% 
+  select(-Owner, -Transmission, -Fuel_Type)
+  
+model_car1 <- lm(formula = Selling_Price ~ ., data = car1)
+summary(model_car1)
+```
+
+```{r}
+step(object = model_carAll, scope = list(lower = model_car1, upper = model_carAll), 
+     direction = "backward", trace = F)
+model_car.back <- lm(formula = Selling_Price ~ Car_Name + Year + Present_Price + 
+    Kms_Driven + Fuel_Type + Seller_Type, data = car)
+```
+
+```{r}
+step(object = model_carAll, scope = list(lower = model_car1, upper = model_carAll), 
+     direction = "forward", trace = F)
+model_car.forw <- lm(formula = Selling_Price ~ Car_Name + Year + Present_Price + 
+    Kms_Driven + Fuel_Type + Seller_Type + Transmission + Owner, 
+    data = car)
+```
+
+```{r}
+step(object = model_carAll, scope = list(lower = model_car1, upper = model_carAll), 
+     direction = "both", trace = F)
+model_car.both <- lm(formula = Selling_Price ~ Car_Name + Year + Present_Price + 
+    Kms_Driven + Fuel_Type + Seller_Type, data = car)
+```
+
+```{r}
+summary(model_car.back)$adj.r.squared
+summary(model_car.forw)$adj.r.squared
+summary(model_car.both)$adj.r.squared
+```
+
+Normality
+
+```{r}
+hist(model_car.back$residuals, breaks = 50)
+```
+
+
+```{r}
+shapiro.test(model_car.back$residuals)
+```
+
+Homoscedasticity
+
+```{r}
+plot(model_car.back$residuals, car$Selling_Price)
+abline(h = 0, col = "red")
+```
+
+```{r}
+vif(model_car.back)
+```
+
+Prediction
+
+```{r}
+car_test <- read.csv("data_input/car_test.csv")
+car_test_subset <- car_test %>% 
+  select(Car_Name, Year, Selling_Price, Present_Price,Kms_Driven,Fuel_Type,Seller_Type)
+car_test_subset$Car_Name <- droplevels(car_test_subset$Car_Name)
+```
+
+
+```{r}
+predict_car <- predict(object = model_car.back, newdata = car_test_subset)
+```
+

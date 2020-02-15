@@ -1,0 +1,9 @@
+redDF %>% pivot_longer(cols = 1:ncol(redDF)-1, 
+                         names_to = "test.type", 
+                         values_to = "value") %>% 
+     ggplot(aes(x = quality,
+                y = value)) +
+     geom_jitter(aes(color = test.type), show.legend = F) +
+     facet_wrap(~test.type)
+
+CheckCollinear(redDF, model_red1)
