@@ -104,7 +104,7 @@ Available at: [Web Link](http://dx.doi.org/10.1016/j.dss.2009.05.016)
 
 ## Preparation {#prep}
 
-Prepare the performance indicators.
+Prepare the performance indicators and all necessary functions.
 
 ```{r warning=FALSE, message=FALSE}
 library(MLmetrics)
@@ -201,7 +201,7 @@ Moreover, there are several predictors which have strong relationship, e.g. betw
      
 Each predictor variable show value distributed appropriately. However, the target variable exhibits poor distribution. This supports the above finding from scatter plots analysis. We could check the summary of such variable to make sure.
 
-```{r}
+```{r collapse=TRUE}
 summary(redDF$quality)
 table(redDF$quality)
 ```
@@ -294,7 +294,7 @@ By reading their score above, we see that the only largest value is `fixed.acidi
 
 ## Model Improvements {#modimprov}
 
-As stated in the previous chapter, by using `summary()` function and checking the assumptions, the model performs poor results, except in case of multicollinearity. Thus, any improvement has to be executed to decrease the its drawbacks.
+As stated in the previous chapter, by using `summary()` function and checking the assumptions, the model performs poor results, except in case of multicollinearity. Thus, any improvement has to be executed to decrease its drawbacks.
 
 ### Check the Outliers
 
@@ -328,7 +328,7 @@ summary(model_red2)
 
 It seems the new model performs more reliable. To make sure, let's check the adjusted R-squared values between two models.
 
-```{r}
+```{r collapse=TRUE}
 print("Adjusted R-squared for 1st model:")
 ad.r.sq1 <- summary(model_red1)$adj.r.squared
 ad.r.sq1
@@ -397,7 +397,7 @@ summary(model.both_red)
 
 All three approaches have been defined. Now, we're going to compare our all models so far by their adjusted R-squared.
 
-```{r}
+```{r collapse=TRUE}
 cat("Adjusted R-squared for 1st model:\n")
 ad.r.sq1 <- summary(model_red1)$adj.r.squared
 ad.r.sq1
@@ -431,7 +431,7 @@ In this chapter, we're going to discuss the best model so far and use it to pred
 
 Here, we're going to check the performances of the chosen model. The metrics used are Mean Squared Error (MSE), Root Mean Squared Error (RMSE), and Mean Absolute Error (MAE). We just need the `indicator()` function defined in the beginning.
 
-```{r}
+```{r collapse=TRUE}
 indicator(model = model_redAll, y_pred = model_redAll$fitted.values, y_true = X.train_red$quality)
 ```
 
@@ -441,7 +441,7 @@ With performances as shown above, we will compare them to those of the predictio
 
 Here, we're going to compare the performances of prediction using train dataset to those of using test dataset. The metrics used are MSE, RMSE, MAE, correlation between `y_pred` and `y_true`, and R-squared between `y_pred` and `y_true`. The plots between `y_pred` and `y_true` for each train dataset and test dataset also will be shown.
 
-```{r}
+```{r collapse=TRUE}
 cat("Performance using train dataset:\n")
 metrics(y_pred = model_redAll$fitted.values, y_true = X.train_red$quality)
 
