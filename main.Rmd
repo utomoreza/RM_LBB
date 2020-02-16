@@ -63,7 +63,10 @@ This article is arranged as follows.
 2. [Metadata](#meta)
 3. [Preparation](#prep)
 4. [Exploratory Data Analysis](#eda)
-5. 
+5. [Modelling](#model)
+6. [Model Improvements](#modimprov)
+7. [Results and Discussions](#resdis)
+8. [Conclusions](#conc)
 
 ## Metadata {#meta}
 
@@ -114,6 +117,18 @@ indicator <- function(model, y_pred, y_true) {
      print(paste0("MAE: ", round(mae, 4)))
 }
 
+metrics <- function(y_pred, y_true){
+     mse <- MSE(y_pred, y_true)
+     rmse <- RMSE(y_pred, y_true)
+     mae <- MAE(y_pred, y_true)
+     print(paste0("MSE: ", round(mse, 6)))
+     print(paste0("RMSE: ", round(rmse, 6)))
+     print(paste0("MAE: ", round(mae, 6)))
+     corPredAct <- cor(y_pred, y_true)
+     print(paste0("Correlation: ", round(corPredAct, 6)))
+     print(paste0("R^2 between y_pred & y_true: ", round(corPredAct^2, 6)))
+}
+
 CheckNormal <- function(model) {
      hist(model$residuals, breaks = 30)
      shaptest <- shapiro.test(model$residuals)
@@ -152,7 +167,7 @@ redDF %>% is.na() %>% colSums()
 
 Perfect. Since the used datasets are originally clean, we will not find any missing value. So, let's move on to explore the data.
 
-## Exploratory Data Analysis {.tabset .tabset-fade .tabset-pills} {#eda}
+## Exploratory Data Analysis {#eda}
 
 In order to explore the dataset, we could use scatter plots, histograms, correlation value, and p-value.
 
@@ -174,13 +189,13 @@ chart.Correlation(redDF, hist = T)
 
 The preceding figure tells many things. But, in general, it shows four points: scatter plots between each variable, histograms of each variable, correlation values between each value, and p-values between each value against significance value of 0.05.
 
-### Scatter plots
+### Scatter plots {#scat}
 
 Surprisingly, we found something interesting here. The scatter plots of between `quality` and each predictor variable form the same pattern that the target variable `quality` classifies the values into several classess, i.e. 3, 4, 5, 6, 7, and 8. To examine this case, we will go through to assess linear regression to model the data.
 
 Moreover, there are several predictors which have strong relationship, e.g. between `fixed.acidity` and `citric.acid`. They are indicated by their tendency to have inclined or declined line. This case is discussed further in the Correlation values point below.
 
-### Histograms
+### Histograms {#hist}
      
 Each predictor variable show value distributed appropriately. However, the target variable exhibits poor distribution. This supports the above finding from scatter plots analysis. We could check the summary of such variable to make sure.
 
@@ -208,7 +223,7 @@ In addition, it is only `volatile.acidity` and `alcohol` which have the largest 
 
 In this p-value analysis, we're only interested in considering the p-values of relationship between `quality` and each predictor variable. We can see that all variables have at least one star (meaning p-value less than pre-determined alpha (i.e. 0.05)), except `residual.sugar`. So, we won't consider such variable any longer.
 
-## Modelling
+## Modelling {#model}
 
 ### Splitting Train Datasets and Test Datasets
 
@@ -276,7 +291,7 @@ vif(model_red1)
 
 By reading their score above, we see that the only largest value is `fixed.acidity`, i.e. ± 6.9. Fortunately, such score is still lower than 10. Therefore, in case of multicollinearity, our model performs satisfactorily.
 
-## Model Improvements
+## Model Improvements {#modimprov}
 
 As stated in the previous chapter, by using `summary()` function and checking the assumptions, the model performs poor results, except in case of multicollinearity. Thus, any improvement has to be executed to decrease the its drawbacks.
 
@@ -326,16 +341,18 @@ Well done. Adjusted R-squared increases by almost 2%. Now, we move on to try fea
 
 ### Feature Selection Implementation
 
+We're going to employ step-wise algorithm for the feature selection method. We will use three directions of the algorithm, i.e. backward, forward, and both. First of all, we have to define the models for lower and upper threshold of the algorithm.
+
   + Create two models as threshold for the step wise algorithm
      
 ```{r}
 model_redAlc <- lm(quality ~ alcohol, data = X.train_red)
-summary(model_redAlc)
+# summary(model_redAlc)
 model_redAll <- lm(quality ~ ., data = X.train_red)
-summary(model_redAll)
+# summary(model_redAll)
 ```
 
-The performances of both models above show ------. Now, let's carry out three approaches of step-wise algorithm, i.e. backward, forward, and both.
+Now, let's carry out three approaches of step-wise algorithm.
 
   + Backward approach
 
@@ -377,39 +394,60 @@ model.both_red <- lm(formula = quality ~ alcohol + volatile.acidity + sulphates 
 summary(model.both_red)
 ```
 
+All three approaches have been defined. Now, we're going to compare our models so far by their adjusted R-squared.
+
+```{r}
+cat("Adjusted R-squared for 1st model:\n")
+ad.r.sq1 <- summary(model_red1)$adj.r.squared
+ad.r.sq1
+cat("\nAdjusted R-squared for 2nd model:\n")
+ad.r.sq2 <- summary(model_red2)$adj.r.squared
+ad.r.sq2
+cat("\nAdjusted R-squared for model using 'alcohol' variable only:\n")
+ad.r.sqAlc <- summary(model_redAlc)$adj.r.squared
+ad.r.sqAlc
+cat("\nAdjusted R-squared for model using all variables:\n")
+ad.r.sqAll <- summary(model_redAll)$adj.r.squared
+ad.r.sqAll
+cat("\nAdjusted R-squared for model with backward approach:\n")
+ad.r.sqBack <- summary(model.back_red)$adj.r.squared
+ad.r.sqBack
+cat("\nAdjusted R-squared for model with forward approach:\n")
+ad.r.sqForw <- summary(model.forw_red)$adj.r.squared
+ad.r.sqForw
+cat("\nAdjusted R-squared for model with both approach:\n")
+ad.r.sqBoth <- summary(model.both_red)$adj.r.squared
+ad.r.sqBoth
+```
+
+Evidently, after we have performed feature selection, we don't obtain the model with much higher performance. Instead, the best model so far is achieved not from such selection, but from manually including all available predictor variables. **Hence, from now on, the best model used will be the one with all predictor variables.**
+
 ## Results and Discussions {#resdis}
 
 In this chapter, we're going to discuss the best model so far and use it to predict the test dataset. Firstly, the performance of the model is discussed. Subsequently, the predictions will be carried out later.
 
 ### Check the Performances
 
-```{r}
-indicator(model = model.back_red, y_pred = model.back_red$fitted.values, y_true = X.train_red$quality)
-```
+Here, we're going to check the performances of the chosen model. The metrics used are Mean Squared Error (MSE), Root Mean Squared Error (RMSE), and Mean Absolute Error (MAE). We just need the `indicator()` function defined in the beginning.
 
 ```{r}
-indicator(model = model.forw_red, y_pred = model.forw_red$fitted.values, y_true = X.train_red$quality)
+indicator(model = model_redAll, y_pred = model_redAll$fitted.values, y_true = X.train_red$quality)
 ```
 
-```{r}
-indicator(model = model.both_red, y_pred = model.both_red$fitted.values, y_true = X.train_red$quality)
-```
+With performances as shown above, we will compare them to those of the prediction using test dataset.
 
 ### Predictions
 
+Here, we're going to compare the performances of prediction using train dataset to those of using test dataset. The metrics used are MSE, RMSE, MAE, correlation between `y_pred` and `y_true`, and R-squared between `y_pred` and `y_true`. The plots between `y_pred` and `y_true` for each train dataset and test dataset also will be shown.
+
 ```{r}
 cat("Performance using train dataset:\n")
-indicator(model = model.back_red, y_pred = model.back_red$fitted.values, y_true = X.train_red$quality)
-cat("Correlation between predicted and actual values using TRAIN dataset\n")
-cor(model.back_red$fitted.values, X.train_red$quality)
+metrics(y_pred = model_redAll$fitted.values, y_true = X.train_red$quality)
 
-redPredict.back <- predict(model.back_red, newdata = X.test_red)
+redPredict.back <- predict(model_redAll, newdata = X.test_red)
 cat("\nPerformances using test dataset:\n")
-indicator(model = model.back_red, y_pred = redPredict.back, y_true = X.test_red$quality)
-cat("Correlation between predicted and actual values using TEST dataset\n")
-cor(redPredict.back, X.test_red$quality)
+metrics(y_pred = redPredict.back, y_true = X.test_red$quality)
 ```
-
 ```{r}
 redFitted.back <- data.frame(qualityPred = model.back_red$fitted.values,
                                 qualityAct = X.train_red$quality)
@@ -421,8 +459,6 @@ ggplot(redFitted.back, aes(x = qualityPred,
           x = "Predicted quality",
           y = "Actual quality")
 ```
-
-
 ```{r}
 redPredict.backDF <- data.frame(qualityPred = redPredict.back,
                                 qualityAct = X.test_red$quality)
@@ -435,10 +471,46 @@ ggplot(redPredict.backDF, aes(x = qualityPred,
           y = "Actual quality")
 ```
 
-Poor results
+There are several points we can infer from the performance results above:
 
-## Conclusions
+1. The model overfits the train dataset so that it performs poor when using test dataset.
+2. As the model has defective results, it is unable to satisfactorily predict the target variable.
+3. The plots verify poin number 2 that the model in fact is ineffective to predict the target variable. 
 
+## Conclusions {#conc}
 
+We have finished this article. Below are the points we can conclude from this article:
 
-## References
+* A linear model has been created. The target variable is `quality`, whereas the attributes of physicochemical tests are as the predictor variables.
+
+* The selected model is the one with all available variables. So, the model equation is as follows:
+
+$\hat{Y} = \beta_0+\beta_1X_1+\beta_2X_2+\beta_3X_3+\beta_4X_4+\beta_5X_5+\beta_6X_6+\beta_7X_7+\beta_8X_8+\beta_9X_9+\beta_{10} X_{10}+\beta_{11}X_{11}$ 
+
+where the following are values from the $\beta_0$ to $\beta_{11}$ and from $X_1$ to $X_{11}$:
+
+```{r}
+model_redAll$coefficients
+```
+
+* The statistical values (adjusted) R-squared, Mean Squared Error (MSE), Root Mean Squared Error (RMSE), and Mean Absolute Error (MAE) of the selected model have been calculated.
+
+```{r}
+indicator(model = model_redAll, y_pred = model_redAll$fitted.values, y_true = X.train_red$quality)
+```
+
+* The selected model has been examined and improved using statistics tests (the assumptions and feature selection) and visualizations in [Modelling](#model) and [Model Improvements](#modimprov) chapters.
+
+* The selected model has been interpretated in [Results and Discussions](#resdis) chapter.
+
+* The selected model has been tested using test dataset test and discussed in [Results and Discussions](#resdis) chapter.
+
+* The selected performs ineffective in modelling the train dataset. The best adjusted R-squared value produced is only at 0.3832.
+
+* As the selected model show poor performances, it also demonstrates deficient results when predicting the test dataset.
+
+* As stated earlier in [histogram](#hist) and [scatter plots](#scat) sections that it is found an initial hypothesis that the target variable has classified values instead of continuous values so it seems the linear regression is not suitable with the dataset, such hypothesis has been proven. All results and discussions in this article verify it.
+
+* As mentioned above, therefore, it can be concluded that for the type of this dataset, **in particular a target variable with classified values, it is not recommended to model the data using linear regression.**
+
+* For future study, other algorithms will be applied to model this wine quality dataset.
