@@ -22,6 +22,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This article aims to accomplish [Regression Model](https://algorit.ma/course/regression-models/) course at Algoritma. The dataset used is obtained from [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Wine+Quality), i.e. Wine Quality Data Set. There are two datasets provided (red wine and white wine), but **only the red wine one will be discussed in this article.**
 
+You could see the source code in my GitHub account [here](https://github.com/utomoreza/RM_LBB). I also wrote this article in Python language using Jupyter notebook. You could see it [here](main.ipynb).
+
 ### Dataset Background
 
 The two datasets are related to red and white variants of the Portuguese \"Vinho Verde\" wine. For more details, consult: [Web Link](http://www.vinhoverde.pt/en/) or the reference [Cortez et al., 2009](http://dx.doi.org/10.1016/j.dss.2009.05.016). Due to privacy and logistic issues, only physicochemical (inputs) and sensory (the output) variables are available (e.g. there is no data about grape types, wine brand, wine selling price, etc.).
@@ -36,7 +38,7 @@ The goal is to model red wine quality based on physicochemical tests.
 
 1. To solve the final model equation
 
-2. To output the statistical values (adjusted) R-squared and Root Mean Squared Error (RMSE)
+2. To output the statistical values (adjusted) R-squared, Mean Squared Error (MSE), Root Mean Squared Error (RMSE), and MAE (Mean Absolute Error)
 
 3. To examine the model including statistics and visualizations:
 
@@ -206,7 +208,7 @@ table(redDF$quality)
 
 Unsuprisingly, `quality` does have classified values. **Based on this finding, it seems that linear regression is not suitable for this dataset. This is our initial hypothesis.**
 
-### Correlation values
+### Correlation values {#corr}
 
 The figure above shows that below relationships have a strong correlation. This also can be seen
 
@@ -215,9 +217,9 @@ The figure above shows that below relationships have a strong correlation. This 
  + Between `fixed.acidity` and `pH` (-0.68)
  + Between `free.sulfur.dioxide` and `total.sulfur.dioxide` (0.67)
      
-Those perhaps indicate sufficiently high multicollinearity. We will highlight this issue and discuss it later in the [model for red wine](#redasum).
+Those perhaps indicate sufficiently high multicollinearity. We will highlight this issue and discuss it later in the [assumptions](#asum) section.
 
-### P-values
+### P-values {#pval}
 
 In addition, it is only `volatile.acidity` and `alcohol` which have the largest correlation value with `quality`. However, we also need to check the Pearson's correlation test based on the p-value. As seen in the figure above, the red stars in the upper triangle of the matrix indicate the significance. The more the stars exist, the more significant the relationship is. In order to be significant enough to the significance value (we use significance value (alpha) of 0.05), we need at least one star.
 
@@ -227,8 +229,7 @@ In this p-value analysis, we're only interested in considering the p-values of r
 
 ### Splitting Train Datasets and Test Datasets
 
-80% of data for train datasets
-20% of data for test datasets
+By using the dataset, we're going to split it up into 80% of data for train datasets and 20% of data for test datasets.
 
 ```{r}
 set.seed(1)
@@ -244,7 +245,7 @@ rownames(X.test_red) <- NULL
 
 #### Create the Model
 
-As mentioned in [red wine exploratory data analysis](#Using-Scatter-Plots,-Correlation,-and-p-value), we will employ all predictor variables, except `residual.sugar`, for the model. Let's create linear model from those variables.
+As mentioned in the [exploratory data analysis](#pval), we will employ all predictor variables, except `residual.sugar`, for the model. Let's create linear model from those variables.
 
 ```{r}
 model_red1 <- lm(quality ~ fixed.acidity + volatile.acidity + citric.acid + chlorides + free.sulfur.dioxide + total.sulfur.dioxide + density + pH + sulphates + alcohol, 
@@ -254,15 +255,15 @@ summary(model_red1)
 
 From the `summary()` function above, it can be seen that approximately a half number of all predictor variables exhibits insignificance. Furthermore, the adjusted R-squared also performs poor result. Before we tackle with this issue, we should check the assumptions of the model.
 
-#### Check the assumptions {#redasum}
+#### Check the assumptions {#asum}
 
-Since the linearity assumption has been discussed earlier in [this section](#Using-Scatter-Plots,-Correlation,-and-p-value), here, we're going to use three assumptions, i.e. normality, homoscedasticity, and multicollinearity.
+Since the linearity assumption has been discussed earlier in [this section](#corr), here, we're going to use three assumptions, i.e. normality, homoscedasticity, and multicollinearity.
 
  + Normality
      
 By employing normality assumption, we'd like to have the residuals of the predicted value to approach the normal distribution. We can check this by plotting the residuals and using Shapiro-Wilk normality test. For the latter, we expect to have p-value more than significance value (i.e. 0.05) so that the null hypothesis is failed to reject.
 
-In the [Preparation](#Preparation) chapter, we have declared a function to carry out this task called `CheckNormal()`. So, let's use it.
+In the [Preparation](#prep) chapter, we have declared a function to carry out this task called `CheckNormal()`. So, let's use it.
      
 ```{r}
 CheckNormal(model = model_red1)
@@ -280,7 +281,7 @@ CheckHomos(model = model_red1)
 
 As read above, the p-value is so small that null hypothesis is rejected. Moreover, the figure above also points out line-like patterns. This indeed states that the residuals generate patterns, meaning that heteroscedasticity exists. We don't want this.
 
- + Multicollinearity {#multi}
+ + Multicollinearity
  
 In multicollinearity factor, inside the model, we'd like to have each predictor variable **not** demonstrating strong relationship with each other. We could examine this factor by inspecting their VIF (Variance Inflation Factor) score. We expect to have VIF score not greater than 10. We can perform this task by using the function `vif()` from the `car` package.
 
@@ -394,7 +395,7 @@ model.both_red <- lm(formula = quality ~ alcohol + volatile.acidity + sulphates 
 summary(model.both_red)
 ```
 
-All three approaches have been defined. Now, we're going to compare our models so far by their adjusted R-squared.
+All three approaches have been defined. Now, we're going to compare our all models so far by their adjusted R-squared.
 
 ```{r}
 cat("Adjusted R-squared for 1st model:\n")
@@ -420,7 +421,7 @@ ad.r.sqBoth <- summary(model.both_red)$adj.r.squared
 ad.r.sqBoth
 ```
 
-Evidently, after we have performed feature selection, we don't obtain the model with much higher performance. Instead, the best model so far is achieved not from such selection, but from manually including all available predictor variables. **Hence, from now on, the best model used will be the one with all predictor variables.**
+Evidently, after we have performed feature selection, we don't obtain the model with much higher performance. Instead, the best model so far is achieved not from such selection, but from manually including all available predictor variables. **Hence, from now on, the best model used will be the one with all predictor variables, i.e. `model_redAll`**
 
 ## Results and Discussions {#resdis}
 
