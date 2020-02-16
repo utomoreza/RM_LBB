@@ -1,0 +1,47 @@
+"0","step(model_redAlc, scope = list(lower = model_redAlc, upper = model_redAll),
+     direction = ""forward"",
+     trace = F)
+"
+"1","
+Call:
+"
+"1",""
+"1","lm(formula = quality ~ alcohol + volatile.acidity + sulphates + 
+    total.sulfur.dioxide + chlorides + pH + free.sulfur.dioxide, 
+    data = X.train_red)"
+"1",""
+"1","
+
+"
+"1","Coefficients:
+"
+"1","         (Intercept)  "
+"1","             alcohol  "
+"1","    volatile.acidity  "
+"1","
+"
+"1","            4.088908  "
+"1","            0.306260  "
+"1","           -0.965571  "
+"1","
+"
+"1","           sulphates  "
+"1","total.sulfur.dioxide  "
+"1","           chlorides  "
+"1","
+"
+"1","            0.875497  "
+"1","           -0.003924  "
+"1","           -1.673087  "
+"1","
+"
+"1","                  pH  "
+"1"," free.sulfur.dioxide  "
+"1","
+"
+"1","           -0.430205  "
+"1","            0.004563  "
+"1","
+"
+"1","
+"

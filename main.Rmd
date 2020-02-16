@@ -20,7 +20,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction {#intro}
 
-This article aims to accomplish [Regression Model](https://algorit.ma/course/regression-models/) course at Algoritma. The dataset used is obtained from [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Wine+Quality), i.e. Wine Quality Data Set. The dataset will be used to predict wine quality.
+This article aims to accomplish [Regression Model](https://algorit.ma/course/regression-models/) course at Algoritma. The dataset used is obtained from [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Wine+Quality), i.e. Wine Quality Data Set. There are two datasets provided (red wine and white wine), but **only the red wine one will be discussed in this article.**
 
 ### Dataset Background
 
@@ -30,7 +30,7 @@ These datasets can be viewed as classification or regression tasks. The classes 
 
 ### Aim
 
-The goal is to model wine quality based on physicochemical tests.
+The goal is to model red wine quality based on physicochemical tests.
 
 ### Objectives
 
@@ -52,7 +52,6 @@ The goal is to model wine quality based on physicochemical tests.
 
 + Are there any outliers?
 + Are there missing values?
-+ How will categorical variables be handled?
 
 6. To test the model using dataset test and discuss the results
 
@@ -133,32 +132,27 @@ CheckHomos <- function(model){
      BP <- bptest(model)
      print(BP)
      if (BP$p.value <= 0.05) {
-          print("H0 rejected: Error variance spreads INCONSTANTLY/generating patterns (Heteroskedasticity)")
+          print("H0 rejected: Error variance spreads INCONSTANTLY/generating patterns (Heteroscedasticity)")
      } else {
-          print("H0 failed to reject: Error variance spreads CONSTANTLY (Homoskedasticity)")
+          print("H0 failed to reject: Error variance spreads CONSTANTLY (Homoscedasticity)")
      }
 }
 ```
 
 ```{r}
 redDF <- read.csv("winequality-red.csv", sep = ";")
-whiteDF <- read.csv("winequality-white.csv", sep = ";")
 redDF
-whiteDF
 ```
 
 ```{r warning=FALSE, message=FALSE}
 library(tidyverse)
 
 redDF %>% is.na() %>% colSums()
-whiteDF %>% is.na() %>% colSums()
 ```
 
 Perfect. Since the used datasets are originally clean, we will not find any missing value. So, let's move on to explore the data.
 
 ## Exploratory Data Analysis {.tabset .tabset-fade .tabset-pills} {#eda}
-
-### Exploring Red Wine Dataset
 
 In order to explore the dataset, we could use scatter plots, histograms, correlation value, and p-value.
 
@@ -180,13 +174,13 @@ chart.Correlation(redDF, hist = T)
 
 The preceding figure tells many things. But, in general, it shows four points: scatter plots between each variable, histograms of each variable, correlation values between each value, and p-values between each value against significance value of 0.05.
 
-1. Scatter plots
+### Scatter plots
 
 Surprisingly, we found something interesting here. The scatter plots of between `quality` and each predictor variable form the same pattern that the target variable `quality` classifies the values into several classess, i.e. 3, 4, 5, 6, 7, and 8. To examine this case, we will go through to assess linear regression to model the data.
 
 Moreover, there are several predictors which have strong relationship, e.g. between `fixed.acidity` and `citric.acid`. They are indicated by their tendency to have inclined or declined line. This case is discussed further in the Correlation values point below.
 
-2. Histograms
+### Histograms
      
 Each predictor variable show value distributed appropriately. However, the target variable exhibits poor distribution. This supports the above finding from scatter plots analysis. We could check the summary of such variable to make sure.
 
@@ -197,7 +191,7 @@ table(redDF$quality)
 
 Unsuprisingly, `quality` does have classified values. **Based on this finding, it seems that linear regression is not suitable for this dataset. This is our initial hypothesis.**
 
-3. Correlation values
+### Correlation values
 
 The figure above shows that below relationships have a strong correlation. This also can be seen
 
@@ -208,67 +202,13 @@ The figure above shows that below relationships have a strong correlation. This 
      
 Those perhaps indicate sufficiently high multicollinearity. We will highlight this issue and discuss it later in the [model for red wine](#redasum).
 
-     4. P-values
+### P-values
 
 In addition, it is only `volatile.acidity` and `alcohol` which have the largest correlation value with `quality`. However, we also need to check the Pearson's correlation test based on the p-value. As seen in the figure above, the red stars in the upper triangle of the matrix indicate the significance. The more the stars exist, the more significant the relationship is. In order to be significant enough to the significance value (we use significance value (alpha) of 0.05), we need at least one star.
 
-In this p-value analysis, we're only interested in considering the p-values of relationship between `quality` and each predictor variable. We can see that all variables have at least one star (meaning p-value less than pre-determined alpha (i.e. 0.05)), except `residual.sugar`. So, we won't consider such variable any longer. You could move on to [red wine modelling](#redmodel) if you wouldn't like to read exploring white wine dataset.
+In this p-value analysis, we're only interested in considering the p-values of relationship between `quality` and each predictor variable. We can see that all variables have at least one star (meaning p-value less than pre-determined alpha (i.e. 0.05)), except `residual.sugar`. So, we won't consider such variable any longer.
 
-### Exploring White Wine Dataset
-
-#### Using Boxplots
-
-```{r}
-whiteDF %>% pivot_longer(cols = c(1:11), names_to = "Params", values_to = "Value") %>% 
-     ggplot(aes(x = Params,
-                y = Value,
-                fill = Params)) +
-     geom_boxplot(show.legend = F) +
-     coord_flip()
-```
-
-- Using Scatter Plots
-
-```{r}
-# ScatPlot <- function(X) {
-#      Xi <- X %>% select(-quality)
-#      for (i in 1:ncol(Xi)) {
-#           plot(Xi[,i], X$quality, 
-#                main = paste0("quality vs ", names(redDF[i])),
-#                xlab = names(redDF[i]),
-#                ylab = "quality")
-#      }
-# }
-# 
-# ScatPlot(whiteDF)
-```
-
-
-- Using Correlation
-
-```{r}
-# ggcorrplot(whiteDF %>% cor(),
-#   hc.order = TRUE, type = "lower",
-#   lab = TRUE,
-#   digits = 1,
-#   ggtheme = ggplot2::theme_dark(),
-# )
-```
-
-Most variables have little correlation with `quality`. It is only `alcohol` that has slightly large correlation value, i.e. 0.4. However, in order to make sure, we need to perform Pearson's correlation test.
-
-```{r}
-# CorTest(whiteDF)
-```
-
-There are only two variable which are not significant, i.e. `free.sulfur.dioxide` and `citric.acid`. So, we will remove them from `whiteDF`.
-
-```{r}
-# whiteDF1 <- whiteDF %>% select(-c(free.sulfur.dioxide, citric.acid))
-# whiteDF1
-```
-
-## Modelling {.tabset .tabset-fade .tabset-pills} {#model}
+## Modelling
 
 ### Splitting Train Datasets and Test Datasets
 
@@ -282,20 +222,12 @@ idx <- sample(seq_len(sampleSize), size = sampleSize)
 
 X.train_red <- redDF[idx,]
 X.test_red <- redDF[-idx,]
+
+rownames(X.train_red) <- NULL
+rownames(X.test_red) <- NULL
 ```
 
-```{r}
-# set.seed(2)
-# sampleSize <- round(nrow(whiteDF1)*0.8)
-# idx <- sample(seq_len(sampleSize), size = sampleSize)
-# 
-# X.train_white <- whiteDF1[idx,]
-# X.test_white <- whiteDF1[-idx,]
-```
-
-### Model for Red Wine {#redmodel}
-
-#### Create the model
+#### Create the Model
 
 As mentioned in [red wine exploratory data analysis](#Using-Scatter-Plots,-Correlation,-and-p-value), we will employ all predictor variables, except `residual.sugar`, for the model. Let's create linear model from those variables.
 
@@ -309,7 +241,7 @@ From the `summary()` function above, it can be seen that approximately a half nu
 
 #### Check the assumptions {#redasum}
 
-Since the linearity assumption has been discussed earlier in [this section](#Using-Scatter-Plots,-Correlation,-and-p-value), here, we're going to use three assumptions, i.e. normality, homoskedasticity, and multicollinearity.
+Since the linearity assumption has been discussed earlier in [this section](#Using-Scatter-Plots,-Correlation,-and-p-value), here, we're going to use three assumptions, i.e. normality, homoscedasticity, and multicollinearity.
 
  + Normality
      
@@ -323,15 +255,15 @@ CheckNormal(model = model_red1)
 
 Although it seems the figure above indicates that the residuals tend to gather around 0 number (i.e. approaching to have normal distribution), we are unable to immediately believe this. We also have to check the results of Shapiro-Wilk normality test. And unfortunately, in the case of normality, our model shows poor results. The p-value is so small that H0 is rejected, meaning that the residuals is **not** distributed normally. We don't want this.
 
- + Homoskedasticity
+ + Homoscedasticity
  
-In homoskedasticity aspect, we'd like to have residuals spreading constantly randomly, without generating any pattern. We have two approaches to examine this aspect, i.e. plotting the residuals vs the predicted values and performing the Breusch-Pagan test. As the function `CheckHomos()` to carry out this task has been declared already in [Preparation](#prep), we just need to use it.
+In homoscedasticity aspect, we'd like to have residuals spreading constantly randomly, without generating any pattern. We have two approaches to examine this aspect, i.e. plotting the residuals vs the predicted values and performing the Breusch-Pagan test. As the function `CheckHomos()` to carry out this task has been declared already in [Preparation](#prep), we just need to use it.
 
 ```{r}
 CheckHomos(model = model_red1)
 ```
 
-As read above, the p-value is so small that null hypothesis is rejected. Moreover, the figure above also points out line-like patterns. This indeed states that the residuals generate patterns, meaning that heteroskedasticity exists. We don't want this.
+As read above, the p-value is so small that null hypothesis is rejected. Moreover, the figure above also points out line-like patterns. This indeed states that the residuals generate patterns, meaning that heteroscedasticity exists. We don't want this.
 
  + Multicollinearity {#multi}
  
@@ -342,94 +274,171 @@ library(car)
 vif(model_red1)
 ```
 
-By looking at the scatter plots, their relationships don't indicate a strong one. We also can check the relationships by reading the VIF scores. The only largest value is `fixed.acidity`, i.e. ± 6.9. Fortunately, such score is still lower than 10. Therefore, in case of multicollinearity, our
+By reading their score above, we see that the only largest value is `fixed.acidity`, i.e. ± 6.9. Fortunately, such score is still lower than 10. Therefore, in case of multicollinearity, our model performs satisfactorily.
 
+## Model Improvements
 
+As stated in the previous chapter, by using `summary()` function and checking the assumptions, the model performs poor results, except in case of multicollinearity. Thus, any improvement has to be executed to decrease the its drawbacks.
 
+### Check the Outliers
 
+Firstly, let's check outliers of the dataset whether any high leverage high influence exist. We could use four plots here, i.e. Residuals vs Fitted, Normal Q-Q, Cook's Distance, and Residuals vs Leverage. For your information regarding those plots, you could read [here](https://data.library.virginia.edu/diagnostic-plots/).
 
 ```{r}
-set.seed(1)
-sampleSize <- round(nrow(redDF)*0.8)
-idx <- sample(seq_len(sampleSize), size = sampleSize)
+par(mfrow=c(2,2)) # Change the panel layout to 2 x 2 
+lapply(c(1,2,4,5), # showing 4 types of plots
+       function(x) plot(model_red1, 
+                        which = x, 
+                        # labels.id = 1:nrow(X.train_red),
+                        cook.levels = c(0.05, 0.1))) %>% invisible()
+```
 
-X.train_redAll <- redDF[idx,]
-# X.test_redAll <- redDF[-idx,]
+From four figures above, we found there are some leverages with high influence, i.e. the observations with index 78, 202, 245, 274, and 1161. We're going to remove those rows.
 
-model_redOne <- lm(quality ~ 1, data = X.train_redAll)
-model_redAll <- lm(quality ~ ., data = X.train_redAll)
-summary(model_redOne)
+```{r}
+to.rm <- c(78,202,245,274,1161)
+# X.train_red[to.rm,]
+X.train_red <- X.train_red[-to.rm,]
+rownames(X.train_red) <- NULL
+```
+
+After the outliers removed, a new model is generated, and also check its summary. 
+
+```{r}
+model_red2 <- lm(quality ~ fixed.acidity + volatile.acidity + citric.acid + chlorides + free.sulfur.dioxide + total.sulfur.dioxide + density + pH + sulphates + alcohol, 
+                 data = X.train_red)
+summary(model_red2)
+```
+
+It seems the new model performs more reliable. To make sure, let's check the adjusted R-squared values between two models.
+
+```{r}
+print("Adjusted R-squared for 1st model:")
+ad.r.sq1 <- summary(model_red1)$adj.r.squared
+ad.r.sq1
+print("Adjusted R-squared for 2nd model:")
+ad.r.sq2 <- summary(model_red2)$adj.r.squared
+ad.r.sq2
+print(paste0("The difference between both is ", round(ad.r.sq2-ad.r.sq1, 5)*100, "%"))
+```
+
+Well done. Adjusted R-squared increases by almost 2%. Now, we move on to try feature selection to improve the model.
+
+### Feature Selection Implementation
+
+  + Create two models as threshold for the step wise algorithm
+     
+```{r}
+model_redAlc <- lm(quality ~ alcohol, data = X.train_red)
+summary(model_redAlc)
+model_redAll <- lm(quality ~ ., data = X.train_red)
 summary(model_redAll)
 ```
 
+The performances of both models above show ------. Now, let's carry out three approaches of step-wise algorithm, i.e. backward, forward, and both.
+
+  + Backward approach
+
 ```{r}
-step(object = model_redAll, direction = "backward", trace = F)
+step(model_redAll, direction = "backward", trace = F)
 ```
 
 ```{r}
-model.back_redAll <- lm(formula = quality ~ volatile.acidity + chlorides + free.sulfur.dioxide + 
-    total.sulfur.dioxide + pH + sulphates + alcohol, data = X.train_redAll)
-summary(model.back_redAll)
+model.back_red <- lm(formula = quality ~ volatile.acidity + chlorides + free.sulfur.dioxide + 
+    total.sulfur.dioxide + pH + sulphates + alcohol, data = X.train_red)
+summary(model.back_red)
+```
+
+  + Forward approach
+
+```{r}
+step(model_redAlc, scope = list(lower = model_redAlc, upper = model_redAll),
+     direction = "forward",
+     trace = F)
 ```
 
 ```{r}
-step(object = model_redAll, 
-     scope = list(lower = model_redOne, upper = model_redAll),
-     direction = "forward", trace = F)
+model.forw_red <- lm(formula = quality ~ alcohol + volatile.acidity + sulphates + total.sulfur.dioxide + chlorides + pH + free.sulfur.dioxide, 
+    data = X.train_red)
+summary(model.forw_red)
+```
+
+  + Both approach
+  
+```{r}
+step(model_redAlc, scope = list(lower = model_redAlc, upper = model_redAll),
+     direction = "both",
+     trace = F)
 ```
 
 ```{r}
-model.forw_redAll <- lm(formula = quality ~ fixed.acidity + volatile.acidity + citric.acid + 
-    residual.sugar + chlorides + free.sulfur.dioxide + total.sulfur.dioxide + 
-    density + pH + sulphates + alcohol, data = X.train_redAll)
-summary(model.forw_redAll)
+model.both_red <- lm(formula = quality ~ alcohol + volatile.acidity + sulphates + total.sulfur.dioxide + chlorides + pH + free.sulfur.dioxide, 
+                     data = X.train_red)
+summary(model.both_red)
+```
+
+## Results and Discussions {#resdis}
+
+In this chapter, we're going to discuss the best model so far and use it to predict the test dataset. Firstly, the performance of the model is discussed. Subsequently, the predictions will be carried out later.
+
+### Check the Performances
+
+```{r}
+indicator(model = model.back_red, y_pred = model.back_red$fitted.values, y_true = X.train_red$quality)
 ```
 
 ```{r}
-step(object = model_redAll, 
-     scope = list(lower = model_redOne, upper = model_redAll),
-     direction = "both", trace = F)
+indicator(model = model.forw_red, y_pred = model.forw_red$fitted.values, y_true = X.train_red$quality)
 ```
 
 ```{r}
-model.both_redAll <- lm(formula = quality ~ volatile.acidity + chlorides + free.sulfur.dioxide + 
-    total.sulfur.dioxide + pH + sulphates + alcohol, data = X.train_redAll)
-summary(model.both_redAll)
+indicator(model = model.both_red, y_pred = model.both_red$fitted.values, y_true = X.train_red$quality)
 ```
 
-
-
-### Model for White Wine
-
-## Model Improvements {.tabset .tabset-fade .tabset-pills} {#modelimprov}
-
-### Improving Red Wine Model
-
-* Check the Outliers
+### Predictions
 
 ```{r}
-redDF %>% pivot_longer(cols = c(1:11), names_to = "Params", values_to = "Value") %>% 
-     ggplot(aes(x = Params,
-                y = Value,
-                fill = Params)) +
-     geom_boxplot(show.legend = F) +
-     coord_flip()
-```
+cat("Performance using train dataset:\n")
+indicator(model = model.back_red, y_pred = model.back_red$fitted.values, y_true = X.train_red$quality)
+cat("Correlation between predicted and actual values using TRAIN dataset\n")
+cor(model.back_red$fitted.values, X.train_red$quality)
 
-* Check the Performances
+redPredict.back <- predict(model.back_red, newdata = X.test_red)
+cat("\nPerformances using test dataset:\n")
+indicator(model = model.back_red, y_pred = redPredict.back, y_true = X.test_red$quality)
+cat("Correlation between predicted and actual values using TEST dataset\n")
+cor(redPredict.back, X.test_red$quality)
+```
 
 ```{r}
-indicator(model = model_red1, y_pred = model_red1$fitted.values, y_true = X.train_red$quality)
+redFitted.back <- data.frame(qualityPred = model.back_red$fitted.values,
+                                qualityAct = X.train_red$quality)
+ggplot(redFitted.back, aes(x = qualityPred,
+                       y = qualityAct)) +
+     geom_point(aes(color = as.factor(qualityAct)), show.legend = F) +
+     geom_smooth(method = "lm", se = F) +
+     labs(title = "Predicted vs Actual Values Using Train Dataset",
+          x = "Predicted quality",
+          y = "Actual quality")
 ```
 
-### Improving White Wine Model
 
-## Results and Discussions {.tabset .tabset-fade .tabset-pills} {#resdis}
+```{r}
+redPredict.backDF <- data.frame(qualityPred = redPredict.back,
+                                qualityAct = X.test_red$quality)
+ggplot(redPredict.backDF, aes(x = qualityPred,
+                       y = qualityAct)) +
+     geom_point(aes(color = as.factor(qualityAct)), show.legend = F) +
+     geom_smooth(method = "lm", se = F) +
+     labs(title = "Predicted vs Actual Values Using Test Dataset",
+          x = "Predicted quality",
+          y = "Actual quality")
+```
 
-### Red Wine
-
-### White Wine
+Poor results
 
 ## Conclusions
+
+
 
 ## References

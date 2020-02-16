@@ -1,6 +1,0 @@
-"0","set.seed(2)"
-"0","sampleSize <- round(nrow(whiteDF1)*0.8)"
-"0","idx <- sample(seq_len(sampleSize), size = sampleSize)"
-"0",""
-"0","X.train_white <- whiteDF1[idx,]"
-"0","X.test_white <- whiteDF1[-idx,]"

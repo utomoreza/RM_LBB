@@ -1,0 +1,5 @@
+"0","par(mfrow=c(2,2)) # Change the panel layout to 2 x 3   "
+"0","lapply(c(1,2,4,5), function(x) plot(model_red1, "
+"0","                                    which = x, "
+"0","                                    # labels.id = 1:nrow(X.train_red),"
+"0","                                    cook.levels = c(0.05, 0.1))) %>% invisible()"
