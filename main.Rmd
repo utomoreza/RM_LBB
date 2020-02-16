@@ -2,16 +2,25 @@
 title: "Regression Model for Predicting Wine Quality"
 author: "Reza Dwi Utomo"
 date: "15/02/2020"
-output: html_document
+output:
+  html_document:
+    highlight: zenburn
+    number_sections: yes
+    theme: flatly
+    toc: yes
+    toc_depth: 2
+    toc_float:
+      collapsed: yes
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Introduction
+## Introduction {#intro}
 
-This notebook aims to accomplish [Regression Model](https://algorit.ma/course/regression-models/) course at Algoritma. The dataset used is obtained from [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Wine+Quality), i.e. Wine Quality Data Set. The dataset will be used to predict wine quality.
+This article aims to accomplish [Regression Model](https://algorit.ma/course/regression-models/) course at Algoritma. The dataset used is obtained from [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Wine+Quality), i.e. Wine Quality Data Set. The dataset will be used to predict wine quality.
 
 ### Dataset Background
 
@@ -47,7 +56,17 @@ The goal is to model wine quality based on physicochemical tests.
 
 6. To test the model using dataset test and discuss the results
 
-### Metadata
+### Structure
+
+This article is arranged as follows.
+
+1. [Introduction](#intro)
+2. [Metadata](#meta)
+3. [Preparation](#prep)
+4. [Exploratory Data Analysis](#eda)
+5. 
+
+## Metadata {#meta}
 
 There are 12 columns available in the dataset. They are briefly described below or you can read in [this file](winequality.names). For more information, read [Cortez et al., 2009](http://dx.doi.org/10.1016/j.dss.2009.05.016).
 
@@ -79,11 +98,11 @@ P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. *Modeling wine prefere
 
 Available at: [Web Link](http://dx.doi.org/10.1016/j.dss.2009.05.016)
 
-## Preparation
+## Preparation {#prep}
 
 Prepare the performance indicators.
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 library(MLmetrics)
 indicator <- function(model, y_pred, y_true) {
      adj.r.sq <- summary(model)$adj.r.squared
@@ -112,19 +131,12 @@ CheckHomos <- function(model){
      plot(model$fitted.values, model$residuals)
      abline(h = 0, col = "red")
      BP <- bptest(model)
+     print(BP)
      if (BP$p.value <= 0.05) {
-          print("H0 rejected: Error variance spreads INCONSTANTLY/generating patterns (Heteroscedasticity)")
+          print("H0 rejected: Error variance spreads INCONSTANTLY/generating patterns (Heteroskedasticity)")
      } else {
-          print("H0 failed to reject: Error variance spreads CONSTANTLY (Homoscedasticity)")
+          print("H0 failed to reject: Error variance spreads CONSTANTLY (Homoskedasticity)")
      }
-}
-
-library(tidyverse)
-library(car)
-library(psych)
-CheckCollinear <- function(dataset, model){
-     dataset %>% select(-quality) %>% pairs.panels()
-     vif(model)
 }
 ```
 
@@ -135,33 +147,22 @@ redDF
 whiteDF
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+
 redDF %>% is.na() %>% colSums()
 whiteDF %>% is.na() %>% colSums()
 ```
 
 Perfect. Since the used datasets are originally clean, we will not find any missing value. So, let's move on to explore the data.
 
-## Exploratory Data Analysis
+## Exploratory Data Analysis {.tabset .tabset-fade .tabset-pills} {#eda}
 
 ### Exploring Red Wine Dataset
 
-#### Using Boxplots
+In order to explore the dataset, we could use scatter plots, histograms, correlation value, and p-value.
 
-```{r}
-redDF %>% pivot_longer(cols = c(1:11), names_to = "Params", values_to = "Value") %>% 
-     ggplot(aes(x = Params,
-                y = Value,
-                fill = Params)) +
-     geom_boxplot(show.legend = F) +
-     coord_flip()
-```
-
-dadada
-
-#### Using Scatter Plots, Correlation, and p-value
-
-```{r}
+```{r warning=FALSE, message=FALSE}
 # library(psych)
 # pairs.panels(redDF)
 
@@ -179,13 +180,13 @@ chart.Correlation(redDF, hist = T)
 
 The preceding figure tells many things. But, in general, it shows four points: scatter plots between each variable, histograms of each variable, correlation values between each value, and p-values between each value against significance value of 0.05.
 
-     1. Scatter plots
+1. Scatter plots
 
 Surprisingly, we found something interesting here. The scatter plots of between `quality` and each predictor variable form the same pattern that the target variable `quality` classifies the values into several classess, i.e. 3, 4, 5, 6, 7, and 8. To examine this case, we will go through to assess linear regression to model the data.
 
 Moreover, there are several predictors which have strong relationship, e.g. between `fixed.acidity` and `citric.acid`. They are indicated by their tendency to have inclined or declined line. This case is discussed further in the Correlation values point below.
 
-     2. Histograms
+2. Histograms
      
 Each predictor variable show value distributed appropriately. However, the target variable exhibits poor distribution. This supports the above finding from scatter plots analysis. We could check the summary of such variable to make sure.
 
@@ -196,22 +197,22 @@ table(redDF$quality)
 
 Unsuprisingly, `quality` does have classified values. **Based on this finding, it seems that linear regression is not suitable for this dataset. This is our initial hypothesis.**
 
-     3. Correlation values
+3. Correlation values
 
 The figure above shows that below relationships have a strong correlation. This also can be seen
 
-     - Between `density` and `fixed.acidity` (0.67)
-     - Between `fixed.acidity` and `citric.acid` (0.67)
-     - Between `fixed.acidity` and `pH` (-0.68)
-     - Between `free.sulfur.dioxide` and `total.sulfur.dioxide` (0.67)
+ + Between `density` and `fixed.acidity` (0.67)
+ + Between `fixed.acidity` and `citric.acid` (0.67)
+ + Between `fixed.acidity` and `pH` (-0.68)
+ + Between `free.sulfur.dioxide` and `total.sulfur.dioxide` (0.67)
      
-Those perhaps indicate sufficiently high multicollinearity. We will highlight this issue and discuss it later in the [model for red wine](#Model-for-Red-Wine).
+Those perhaps indicate sufficiently high multicollinearity. We will highlight this issue and discuss it later in the [model for red wine](#redasum).
 
      4. P-values
 
 In addition, it is only `volatile.acidity` and `alcohol` which have the largest correlation value with `quality`. However, we also need to check the Pearson's correlation test based on the p-value. As seen in the figure above, the red stars in the upper triangle of the matrix indicate the significance. The more the stars exist, the more significant the relationship is. In order to be significant enough to the significance value (we use significance value (alpha) of 0.05), we need at least one star.
 
-In this p-value analysis, we're only interested in considering the p-values of relationship between `quality` and each predictor variable. We can see that all variables have at least one star (meaning p-value less than pre-determined alpha (i.e. 0.05)), except `residual.sugar`. So, we won't consider such variable any longer. You could move on to [red wine modelling](#Model-for-Red-Wine) if you wouldn't like to read exploring white wine dataset below.
+In this p-value analysis, we're only interested in considering the p-values of relationship between `quality` and each predictor variable. We can see that all variables have at least one star (meaning p-value less than pre-determined alpha (i.e. 0.05)), except `residual.sugar`. So, we won't consider such variable any longer. You could move on to [red wine modelling](#redmodel) if you wouldn't like to read exploring white wine dataset.
 
 ### Exploring White Wine Dataset
 
@@ -267,9 +268,9 @@ There are only two variable which are not significant, i.e. `free.sulfur.dioxide
 # whiteDF1
 ```
 
-### Modelling
+## Modelling {.tabset .tabset-fade .tabset-pills} {#model}
 
-#### Splitting Train Datasets and Test Datasets
+### Splitting Train Datasets and Test Datasets
 
 80% of data for train datasets
 20% of data for test datasets
@@ -292,9 +293,9 @@ X.test_red <- redDF[-idx,]
 # X.test_white <- whiteDF1[-idx,]
 ```
 
-#### Model for Red Wine
+### Model for Red Wine {#redmodel}
 
-- Create the model
+#### Create the model
 
 As mentioned in [red wine exploratory data analysis](#Using-Scatter-Plots,-Correlation,-and-p-value), we will employ all predictor variables, except `residual.sugar`, for the model. Let's create linear model from those variables.
 
@@ -306,13 +307,13 @@ summary(model_red1)
 
 From the `summary()` function above, it can be seen that approximately a half number of all predictor variables exhibits insignificance. Furthermore, the adjusted R-squared also performs poor result. Before we tackle with this issue, we should check the assumptions of the model.
 
-- Check the assumptions
+#### Check the assumptions {#redasum}
 
-Since the linearity assumption has been discussed earlier in [this section](#Using-Scatter-Plots,-Correlation,-and-p-value), here, we're going to use three assumptions, i.e. normality, homoscedasticity, and multicollinearity.
+Since the linearity assumption has been discussed earlier in [this section](#Using-Scatter-Plots,-Correlation,-and-p-value), here, we're going to use three assumptions, i.e. normality, homoskedasticity, and multicollinearity.
 
-     + Normality
+ + Normality
      
-By employing normality assumption, we'd like to have the residuals of the predicted value to approach the normal distribution. We can check this by plotting the residuals and using Shapiro-Wilk normality test. For the latter, we desire to have p-value more than significance value (i.e. 0.05) so that the null hypothesis is failed to reject.
+By employing normality assumption, we'd like to have the residuals of the predicted value to approach the normal distribution. We can check this by plotting the residuals and using Shapiro-Wilk normality test. For the latter, we expect to have p-value more than significance value (i.e. 0.05) so that the null hypothesis is failed to reject.
 
 In the [Preparation](#Preparation) chapter, we have declared a function to carry out this task called `CheckNormal()`. So, let's use it.
      
@@ -320,29 +321,32 @@ In the [Preparation](#Preparation) chapter, we have declared a function to carry
 CheckNormal(model = model_red1)
 ```
 
-Although it seems the figure above indicates that the residuals tend to gather around 0 number (i.e. approaching to have normal distribution), we are unable to immediately believe this. We also have to check the results of Shapiro-Wilk normality test. And unfortunately, in the case of normality, our model shows poor results. The p-value is so small that H0 is rejected, meaning that the residuals is **not** distributed normally.
+Although it seems the figure above indicates that the residuals tend to gather around 0 number (i.e. approaching to have normal distribution), we are unable to immediately believe this. We also have to check the results of Shapiro-Wilk normality test. And unfortunately, in the case of normality, our model shows poor results. The p-value is so small that H0 is rejected, meaning that the residuals is **not** distributed normally. We don't want this.
 
-     + Homoscedasticity
+ + Homoskedasticity
+ 
+In homoskedasticity aspect, we'd like to have residuals spreading constantly randomly, without generating any pattern. We have two approaches to examine this aspect, i.e. plotting the residuals vs the predicted values and performing the Breusch-Pagan test. As the function `CheckHomos()` to carry out this task has been declared already in [Preparation](#prep), we just need to use it.
 
 ```{r}
 CheckHomos(model = model_red1)
 ```
 
-     + Multicollinearity
+As read above, the p-value is so small that null hypothesis is rejected. Moreover, the figure above also points out line-like patterns. This indeed states that the residuals generate patterns, meaning that heteroskedasticity exists. We don't want this.
 
-```{r}
-CheckCollinear(dataset = redDF, model = model_red1)
+ + Multicollinearity {#multi}
+ 
+In multicollinearity factor, inside the model, we'd like to have each predictor variable **not** demonstrating strong relationship with each other. We could examine this factor by inspecting their VIF (Variance Inflation Factor) score. We expect to have VIF score not greater than 10. We can perform this task by using the function `vif()` from the `car` package.
+
+```{r warning=FALSE, message=FALSE}
+library(car)
+vif(model_red1)
 ```
 
-#### Red Wine Model Improvements
+By looking at the scatter plots, their relationships don't indicate a strong one. We also can check the relationships by reading the VIF scores. The only largest value is `fixed.acidity`, i.e. ± 6.9. Fortunately, such score is still lower than 10. Therefore, in case of multicollinearity, our
 
 
 
-- Check the Performances
 
-```{r}
-indicator(model = model_red1, y_pred = model_red1$fitted.values, y_true = X.train_red$quality)
-```
 
 ```{r}
 set.seed(1)
@@ -395,6 +399,37 @@ summary(model.both_redAll)
 
 
 
-#### Model for White Wine
+### Model for White Wine
 
-## Model Improvements
+## Model Improvements {.tabset .tabset-fade .tabset-pills} {#modelimprov}
+
+### Improving Red Wine Model
+
+* Check the Outliers
+
+```{r}
+redDF %>% pivot_longer(cols = c(1:11), names_to = "Params", values_to = "Value") %>% 
+     ggplot(aes(x = Params,
+                y = Value,
+                fill = Params)) +
+     geom_boxplot(show.legend = F) +
+     coord_flip()
+```
+
+* Check the Performances
+
+```{r}
+indicator(model = model_red1, y_pred = model_red1$fitted.values, y_true = X.train_red$quality)
+```
+
+### Improving White Wine Model
+
+## Results and Discussions {.tabset .tabset-fade .tabset-pills} {#resdis}
+
+### Red Wine
+
+### White Wine
+
+## Conclusions
+
+## References
