@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This article aims to accomplish [Regression Model](https://algorit.ma/course/regression-models/) course at Algoritma. The dataset used is obtained from [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Wine+Quality), i.e. Wine Quality Data Set. There are two datasets provided (red wine and white wine), but **only the red wine one will be discussed in this article.**
 
-You could see the source code in my GitHub account [here](https://github.com/utomoreza/RM_LBB). I also wrote this article in Python language using Jupyter notebook. You could see it [here](main.ipynb).
+You could see the source code in my GitHub account [here](https://github.com/utomoreza/RM_LBB). I also wrote this article in Python language using Jupyter notebook. You could see it [here](https://github.com/utomoreza/WhiteWineQuality_LR).
 
 ### Dataset Background
 
