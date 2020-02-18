@@ -18,23 +18,23 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Introduction {#intro}
+# Introduction {#intro}
 
 This article aims to accomplish [Regression Model](https://algorit.ma/course/regression-models/) course at Algoritma. The dataset used is obtained from [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Wine+Quality), i.e. Wine Quality Data Set. There are two datasets provided (red wine and white wine), but **only the red wine one will be discussed in this article.**
 
 You could see the source code in my GitHub account [here](https://github.com/utomoreza/RM_LBB). I also wrote this article in Python language using Jupyter notebook. You could see it [here](https://github.com/utomoreza/WhiteWineQuality_LR).
 
-### Dataset Background
+## Dataset Background
 
 The two datasets are related to red and white variants of the Portuguese \"Vinho Verde\" wine. For more details, consult: [Web Link](http://www.vinhoverde.pt/en/) or the reference [Cortez et al., 2009](http://dx.doi.org/10.1016/j.dss.2009.05.016). Due to privacy and logistic issues, only physicochemical (inputs) and sensory (the output) variables are available (e.g. there is no data about grape types, wine brand, wine selling price, etc.).
 
 These datasets can be viewed as classification or regression tasks. The classes are ordered and not balanced (e.g. there are many more normal wines than excellent or poor ones). Outlier detection algorithms could be used to detect the few excellent or poor wines. Also, we are not sure if all input variables are relevant. So it could be interesting to test feature selection methods.
 
-### Aim
+## Aim
 
 The goal is to model red wine quality based on physicochemical tests.
 
-### Objectives
+## Objectives
 
 1. To solve the final model equation
 
@@ -57,7 +57,7 @@ The goal is to model red wine quality based on physicochemical tests.
 
 6. To test the model using dataset test and discuss the results
 
-### Structure
+## Structure
 
 This article is arranged as follows.
 
@@ -70,7 +70,7 @@ This article is arranged as follows.
 7. [Results and Discussions](#resdis)
 8. [Conclusions](#conc)
 
-## Metadata {#meta}
+# Metadata {#meta}
 
 There are 12 columns available in the dataset. They are briefly described below or you can read in [this file](winequality.names). For more information, read [Cortez et al., 2009](http://dx.doi.org/10.1016/j.dss.2009.05.016).
 
@@ -92,17 +92,17 @@ Output variable (based on sensory data):
 
 12. quality (score between 0 and 10)
 
-### Source
+## Source
 
 Paulo Cortez, University of Minho, Guimarães, Portugal, http://www3.dsi.uminho.pt/pcortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis, Viticulture Commission of the Vinho Verde Region(CVRVV), Porto, Portugal @2009
 
-### Relevant Papers
+## Relevant Papers
 
 P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. *Modeling wine preferences by data mining from physicochemical properties*. In Decision Support Systems, Elsevier, 47(4):547-553, 2009.
 
 Available at: [Web Link](http://dx.doi.org/10.1016/j.dss.2009.05.016)
 
-## Preparation {#prep}
+# Preparation {#prep}
 
 Prepare the performance indicators and all necessary functions.
 
@@ -169,7 +169,7 @@ redDF %>% is.na() %>% colSums()
 
 Perfect. Since the used datasets are originally clean, we will not find any missing value. So, let's move on to explore the data.
 
-## Exploratory Data Analysis {#eda}
+# Exploratory Data Analysis {#eda}
 
 In order to explore the dataset, we could use scatter plots, histograms, correlation value, and p-value.
 
@@ -191,15 +191,15 @@ chart.Correlation(redDF, hist = T)
 
 The preceding figure tells many things. But, in general, it shows four points: scatter plots between each variable, histograms of each variable, correlation values between each value, and p-values between each value against significance value of 0.05.
 
-### Scatter plots {#scat}
+## Scatter plots {#scat}
 
 Surprisingly, we found something interesting here. The scatter plots of between `quality` and each predictor variable form the same pattern that the target variable `quality` classifies the values into several classess, i.e. 3, 4, 5, 6, 7, and 8. To examine this case, we will go through to assess linear regression to model the data.
 
 Moreover, there are several predictors which have strong relationship, e.g. between `fixed.acidity` and `citric.acid`. They are indicated by their tendency to have inclined or declined line. This case is discussed further in the Correlation values point below.
 
-### Histograms {#hist}
+## Histograms {#hist}
      
-Each predictor variable show value distributed appropriately. However, the target variable exhibits poor distribution. This supports the above finding from scatter plots analysis. We could check the summary of such variable to make sure.
+Each predictor variable shows values distributed appropriately. However, the target variable exhibits poor distribution. This supports the above finding from scatter plots analysis. We could check the summary of such variable to make sure.
 
 ```{r collapse=TRUE}
 summary(redDF$quality)
@@ -208,9 +208,9 @@ table(redDF$quality)
 
 Unsuprisingly, `quality` does have classified values. **Based on this finding, it seems that linear regression is not suitable for this dataset. This is our initial hypothesis.**
 
-### Correlation values {#corr}
+## Correlation values {#corr}
 
-The figure above shows that below relationships have a strong correlation. This also can be seen
+The figure above shows that below relationships have a strong correlation.
 
  + Between `density` and `fixed.acidity` (0.67)
  + Between `fixed.acidity` and `citric.acid` (0.67)
@@ -219,15 +219,15 @@ The figure above shows that below relationships have a strong correlation. This 
      
 Those perhaps indicate sufficiently high multicollinearity. We will highlight this issue and discuss it later in the [assumptions](#asum) section.
 
-### P-values {#pval}
+## P-values {#pval}
 
 In addition, it is only `volatile.acidity` and `alcohol` which have the largest correlation value with `quality`. However, we also need to check the Pearson's correlation test based on the p-value. As seen in the figure above, the red stars in the upper triangle of the matrix indicate the significance. The more the stars exist, the more significant the relationship is. In order to be significant enough to the significance value (we use significance value (alpha) of 0.05), we need at least one star.
 
 In this p-value analysis, we're only interested in considering the p-values of relationship between `quality` and each predictor variable. We can see that all variables have at least one star (meaning p-value less than pre-determined alpha (i.e. 0.05)), except `residual.sugar`. So, we won't consider such variable any longer.
 
-## Modelling {#model}
+# Modelling {#model}
 
-### Splitting Train Datasets and Test Datasets
+## Splitting Train Datasets and Test Datasets
 
 By using the dataset, we're going to split it up into 80% of data for train datasets and 20% of data for test datasets.
 
@@ -243,7 +243,7 @@ rownames(X.train_red) <- NULL
 rownames(X.test_red) <- NULL
 ```
 
-#### Create the Model
+## Create the Model
 
 As mentioned in the [exploratory data analysis](#pval), we will employ all predictor variables, except `residual.sugar`, for the model. Let's create linear model from those variables.
 
@@ -255,11 +255,11 @@ summary(model_red1)
 
 From the `summary()` function above, it can be seen that approximately a half number of all predictor variables exhibits insignificance. Furthermore, the adjusted R-squared also performs poor result. Before we tackle with this issue, we should check the assumptions of the model.
 
-#### Check the assumptions {#asum}
+## Check the assumptions {#asum}
 
 Since the linearity assumption has been discussed earlier in [this section](#corr), here, we're going to use three assumptions, i.e. normality, homoscedasticity, and multicollinearity.
 
- + Normality
+### Normality
      
 By employing normality assumption, we'd like to have the residuals of the predicted value to approach the normal distribution. We can check this by plotting the residuals and using Shapiro-Wilk normality test. For the latter, we expect to have p-value more than significance value (i.e. 0.05) so that the null hypothesis is failed to reject.
 
@@ -271,7 +271,7 @@ CheckNormal(model = model_red1)
 
 Although it seems the figure above indicates that the residuals tend to gather around 0 number (i.e. approaching to have normal distribution), we are unable to immediately believe this. We also have to check the results of Shapiro-Wilk normality test. And unfortunately, in the case of normality, our model shows poor results. The p-value is so small that H0 is rejected, meaning that the residuals is **not** distributed normally. We don't want this.
 
- + Homoscedasticity
+### Homoscedasticity
  
 In homoscedasticity aspect, we'd like to have residuals spreading constantly randomly, without generating any pattern. We have two approaches to examine this aspect, i.e. plotting the residuals vs the predicted values and performing the Breusch-Pagan test. As the function `CheckHomos()` to carry out this task has been declared already in [Preparation](#prep), we just need to use it.
 
@@ -281,7 +281,7 @@ CheckHomos(model = model_red1)
 
 As read above, the p-value is so small that null hypothesis is rejected. Moreover, the figure above also points out line-like patterns. This indeed states that the residuals generate patterns, meaning that heteroscedasticity exists. We don't want this.
 
- + Multicollinearity
+### Multicollinearity
  
 In multicollinearity factor, inside the model, we'd like to have each predictor variable **not** demonstrating strong relationship with each other. We could examine this factor by inspecting their VIF (Variance Inflation Factor) score. We expect to have VIF score not greater than 10. We can perform this task by using the function `vif()` from the `car` package.
 
@@ -292,11 +292,11 @@ vif(model_red1)
 
 By reading their score above, we see that the only largest value is `fixed.acidity`, i.e. ± 6.9. Fortunately, such score is still lower than 10. Therefore, in case of multicollinearity, our model performs satisfactorily.
 
-## Model Improvements {#modimprov}
+# Model Improvements {#modimprov}
 
 As stated in the previous chapter, by using `summary()` function and checking the assumptions, the model performs poor results, except in case of multicollinearity. Thus, any improvement has to be executed to decrease its drawbacks.
 
-### Check the Outliers
+## Check the Outliers
 
 Firstly, let's check outliers of the dataset whether any high leverage high influence exist. We could use four plots here, i.e. Residuals vs Fitted, Normal Q-Q, Cook's Distance, and Residuals vs Leverage. For your information regarding those plots, you could read [here](https://data.library.virginia.edu/diagnostic-plots/).
 
@@ -340,11 +340,11 @@ print(paste0("The difference between both is ", round(ad.r.sq2-ad.r.sq1, 5)*100,
 
 Well done. Adjusted R-squared increases by almost 2%. Now, we move on to try feature selection to improve the model.
 
-### Feature Selection Implementation
+## Feature Selection Implementation
 
 We're going to employ step-wise algorithm for the feature selection method. We will use three directions of the algorithm, i.e. backward, forward, and both. First of all, we have to define the models for lower and upper threshold of the algorithm.
 
-  + Create two models as threshold for the step wise algorithm
+### Create two models as threshold for the step wise algorithm
      
 ```{r}
 model_redAlc <- lm(quality ~ alcohol, data = X.train_red)
@@ -355,7 +355,7 @@ model_redAll <- lm(quality ~ ., data = X.train_red)
 
 Now, let's carry out three approaches of step-wise algorithm.
 
-  + Backward approach
+### Backward approach
 
 ```{r}
 step(model_redAll, direction = "backward", trace = F)
@@ -367,7 +367,7 @@ model.back_red <- lm(formula = quality ~ volatile.acidity + chlorides + free.sul
 summary(model.back_red)
 ```
 
-  + Forward approach
+### Forward approach
 
 ```{r}
 step(model_redAlc, scope = list(lower = model_redAlc, upper = model_redAll),
@@ -381,7 +381,7 @@ model.forw_red <- lm(formula = quality ~ alcohol + volatile.acidity + sulphates 
 summary(model.forw_red)
 ```
 
-  + Both approach
+### Both approach
   
 ```{r}
 step(model_redAlc, scope = list(lower = model_redAlc, upper = model_redAll),
@@ -423,11 +423,28 @@ ad.r.sqBoth
 
 Evidently, after we have performed feature selection, we don't obtain the model with much higher performance. Instead, the best model so far is achieved not from such selection, but from manually including all available predictor variables. **Hence, from now on, the best model used will be the one with all predictor variables, i.e. `model_redAll`**
 
-## Results and Discussions {#resdis}
+# Results and Discussions {#resdis}
 
-In this chapter, we're going to discuss the best model so far and use it to predict the test dataset. Firstly, the performance of the model is discussed. Subsequently, the predictions will be carried out later.
+In this chapter, we're going to discuss the best model so far and use it to predict the test dataset. Firstly, we should interpret the selected model. Subsequently, the performance of the model is discussed and the predictions will be carried out later.
 
-### Check the Performances
+## Model Interpretation
+
+The selected model is the one with all available preditor variables. We defined it as `model_redAll`. It consist of the following equation:
+
+$\hat{Y} = \beta_0+\beta_1X_1+\beta_2X_2+\beta_3X_3+\beta_4X_4+\beta_5X_5+\beta_6X_6+\beta_7X_7+\beta_8X_8+\beta_9X_9+\beta_{10} X_{10}+\beta_{11}X_{11}$ 
+
+where the following are values from the $\beta_0$ to $\beta_{11}$ and from $X_1$ to $X_{11}$:
+
+```{r}
+model_redAll$coefficients
+```
+
+From the equation above, we can interpret that the line starts from the Cartesian coordinate of (0, 37.87), as pointed by the intercept. Furthermore, along with the increase of any $X_i$, the related $\beta_i$ will adjust the line according to both values.
+
+For example and for simplicity, if we were to have $X_{alcohol} = 1$, then the y coordinate (or so-called the predicted value) would be:
+$\hat{Y} = \beta_0 + \beta_{alcohol}.X_{alcohol} = 37.87 + 0.27*1 = 38.14$
+
+## Check the Performances
 
 Here, we're going to check the performances of the chosen model. The metrics used are Mean Squared Error (MSE), Root Mean Squared Error (RMSE), and Mean Absolute Error (MAE). We just need the `indicator()` function defined in the beginning.
 
@@ -437,7 +454,7 @@ indicator(model = model_redAll, y_pred = model_redAll$fitted.values, y_true = X.
 
 With performances as shown above, we will compare them to those of the prediction using test dataset.
 
-### Predictions
+## Predictions
 
 Here, we're going to compare the performances of prediction using train dataset to those of using test dataset. The metrics used are MSE, RMSE, MAE, correlation between `y_pred` and `y_true`, and R-squared between `y_pred` and `y_true`. The plots between `y_pred` and `y_true` for each train dataset and test dataset also will be shown.
 
@@ -478,7 +495,7 @@ There are several points we can infer from the performance results above:
 2. As the model has defective results, it is unable to satisfactorily predict the target variable.
 3. The plots verify poin number 2 that the model in fact is ineffective to predict the target variable. 
 
-## Conclusions {#conc}
+# Conclusions {#conc}
 
 We have finished this article. Below are the points we can conclude from this article:
 
@@ -487,12 +504,6 @@ We have finished this article. Below are the points we can conclude from this ar
 * The selected model is the one with all available variables. So, the model equation is as follows:
 
 $\hat{Y} = \beta_0+\beta_1X_1+\beta_2X_2+\beta_3X_3+\beta_4X_4+\beta_5X_5+\beta_6X_6+\beta_7X_7+\beta_8X_8+\beta_9X_9+\beta_{10} X_{10}+\beta_{11}X_{11}$ 
-
-where the following are values from the $\beta_0$ to $\beta_{11}$ and from $X_1$ to $X_{11}$:
-
-```{r}
-model_redAll$coefficients
-```
 
 * The statistical values (adjusted) R-squared, Mean Squared Error (MSE), Root Mean Squared Error (RMSE), and Mean Absolute Error (MAE) of the selected model have been calculated.
 
@@ -506,7 +517,7 @@ indicator(model = model_redAll, y_pred = model_redAll$fitted.values, y_true = X.
 
 * The selected model has been tested using test dataset test and discussed in [Results and Discussions](#resdis) chapter.
 
-* The selected performs ineffective in modelling the train dataset. The best adjusted R-squared value produced is only at 0.3832.
+* The selected model performs ineffective in modelling the train dataset. The best adjusted R-squared value produced is only at 0.3832.
 
 * As the selected model show poor performances, it also demonstrates deficient results when predicting the test dataset.
 
